@@ -26,6 +26,7 @@ $(function() {
       secret: "ea64f8ab707c99093f1eb1763b30b491e38203d1",
       token: "?oauth_token=cD0zNjQyNSZzYz1pZGVudGl0eSZ0PTEzMTM2NzU0NTkmdT0zNjUwMiZoPWJkM2YwZjUwZTM3MWQ3ZmI"
     },
+    sprites: {},
     getPlayerInfo: function() {
       $.getJSON(glitch.url + "auth.check" + this.auth.token, function(json) {
         if (json.ok) {
@@ -37,16 +38,53 @@ $(function() {
       });
     },
     getSpriteSheet: function() {
-      if (incomplete(glitch.getPlayerInfo)) { setTimeout(glitch.getSpriteSheet, 20); }
-      else {
-        $.getJSON(glitch.url + "players.getAnimations" + glitch.auth.token + "&player_tsid=" + glitch.player.player_tsid, function(json) {
-          if (json.ok) {
-            $.extend(glitch.player.sheets = {}, json.sheets);
-          }
-          else { reportMsg(json); }
-        });
+      var g = glitch;
+      if (incomplete(g.getPlayerInfo)) {
+        setTimeout(g.getSpriteSheet, 20);
+        return;
       }
-    }
+      $.getJSON(g.url + "players.getAnimations" + g.auth.token + "&player_tsid=" + g.player.player_tsid, function(json) {
+        if (json.ok) {
+          $.extend(g.player.sheets = {}, json.sheets);
+          glitch.loadSprites();
+        }
+        else { reportMsg(json); }
+      });
+    },
+    loadSprites: function() {
+      var len = 0,
+          loaded = 0;
+      var complete = function() {
+        (loaded === len) ?
+          glitch.loadSprites.complete = true :
+          setTimeout(complete, 20);
+      };
+
+      for (var v in glitch.player.sheets) {
+        var img = new Image();
+        img.onload = function() { loaded++; };
+        img.src = glitch.player.sheets[v].url;
+        glitch.sprites[v] = img;
+        len++;
+      }
+      complete();
+    },
+    drawGlitch: function() {
+      if (incomplete(glitch.loadSprites)) {
+        setTimeout(glitch.drawGlitch, 20);
+        return;
+      }
+      var g = glitch,
+          idx = 1,
+          sprite = g.sprites["idle" + idx],
+          w = sprite.width / g.player.sheets["idle" + idx].cols,
+          h = sprite.height / g.player.sheets["idle" + idx].rows,
+          x = (c.canvas.width / 2) - (w / 2),
+          y = (c.canvas.height / 2) - (h / 2),
+          sx = 0,
+          sy = 0;
+      c.drawImage(sprite, sx, sy, w, h, x, y, w, h);
+    },
   };
 
   var c = $("canvas")[0].getContext("2d");
@@ -55,5 +93,6 @@ $(function() {
 
   glitch.getPlayerInfo();
   glitch.getSpriteSheet();
+  glitch.drawGlitch();
   reportMsg("Player Info:", (new Array(81)).join("="), glitch.player);
 });
