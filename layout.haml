@@ -1,0 +1,11 @@
+- scripts = ["jquery.min", "glitch"]
+!!! 5
+%html(lang="en-US")
+  %head
+    %title Glitch API Demo
+    %meta(charset="UTF-8")
+    %link(rel="stylesheet" href="/stylesheets/application.css")
+    - scripts.each do |script|
+      %script(src="/javascripts/#{script}.js")
+  %body
+    = yield
