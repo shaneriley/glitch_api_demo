@@ -69,21 +69,24 @@ $(function() {
       }
       complete();
     },
-    drawGlitch: function() {
+    drawGlitch: function(idx, frame) {
       if (incomplete(glitch.loadSprites)) {
-        setTimeout(glitch.drawGlitch, 20);
+        setTimeout(glitch.drawGlitch, 20, idx, frame);
         return;
       }
       var g = glitch,
-          idx = 1,
-          sprite = g.sprites["idle" + idx],
-          w = sprite.width / g.player.sheets["idle" + idx].cols,
-          h = sprite.height / g.player.sheets["idle" + idx].rows,
+          sprite = g.sprites[idx],
+          w = sprite.width / g.player.sheets[idx].cols,
+          h = sprite.height / g.player.sheets[idx].rows,
           x = (c.canvas.width / 2) - (w / 2),
           y = (c.canvas.height / 2) - (h / 2),
-          sx = 0,
+          sx = w * frame,
           sy = 0;
+      c.clearRect(0, 0, c.canvas.width, c.canvas.height);
       c.drawImage(sprite, sx, sy, w, h, x, y, w, h);
+      frame++;
+      if (frame === g.player.sheets[idx].cols) { frame = 0; }
+      setTimeout(g.drawGlitch, 33, idx, frame);
     },
   };
 
@@ -93,6 +96,6 @@ $(function() {
 
   glitch.getPlayerInfo();
   glitch.getSpriteSheet();
-  glitch.drawGlitch();
+  glitch.drawGlitch("idle1", 0);
   reportMsg("Player Info:", (new Array(81)).join("="), glitch.player);
 });
