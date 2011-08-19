@@ -20,6 +20,11 @@ $(function() {
 
   var glitch = {
     url: "http://api.glitch.com/simple/",
+    anim: {
+      sheet: "idle0",
+      frame: 0,
+      interval: null
+    },
     player: {},
     auth: {
       key: "67-a96fade161031dd5dbaaef1b2c459ab8b3e2dbdd",
@@ -46,10 +51,23 @@ $(function() {
       $.getJSON(g.url + "players.getAnimations" + g.auth.token + "&player_tsid=" + g.player.player_tsid, function(json) {
         if (json.ok) {
           g.player.sheets = json.sheets;
-          glitch.loadSprites();
+          g.player.anims = json.anims;
+          g.createAnimIndex();
         }
         else { reportMsg(json); }
       });
+    },
+    createAnimIndex: function() {
+      var s = this.player.sheets;
+      this.player.anim_index = {};
+      for (var i in s) {
+        for (var j = 0; j < s[i].frames.length; j++) {
+          var col = j % s[i].cols;
+          var row = Math.floor(j / s[i].cols);
+          this.player.anim_index[s[i].frames[j]] = [i, col, row];
+        }
+      }
+      this.loadSprites();
     },
     loadSprites: function() {
       var len = 0,
@@ -69,25 +87,33 @@ $(function() {
       }
       complete();
     },
-    drawGlitch: function(idx, frame) {
+    animate: function(sheet) {
       if (incomplete(glitch.loadSprites)) {
-        setTimeout(glitch.drawGlitch, 20, idx, frame);
+        setTimeout(glitch.animate, 20, sheet);
         return;
       }
+      var g = glitch;
+      g.anim.sheet = sheet;
+      g.anim.frame = 0;
+      g.anim.interval = setInterval(g.drawGlitch, 33);
+    },
+    drawGlitch: function() {
       var g = glitch,
-          sprite = g.sprites[idx],
-          w = sprite.width / g.player.sheets[idx].cols,
-          h = sprite.height / g.player.sheets[idx].rows,
-          x = (c.canvas.width / 2) - (w / 2),
-          y = (c.canvas.height / 2) - (h / 2),
-          sx = w * frame,
-          sy = 0;
+          id = g.player.anims[g.anim.sheet][g.anim.frame],
+          sheet = g.player.anim_index[id][0],
+          col = g.player.anim_index[id][1],
+          row = g.player.anim_index[id][2],
+          f_w = g.sprites[sheet].width / g.player.sheets[sheet].cols,
+          f_h = g.sprites[sheet].height / g.player.sheets[sheet].rows,
+          f_x = f_w * col,
+          f_y = f_h * row,
+          d_x = (c.canvas.width / 2) - (f_w / 2);
+          d_y = (c.canvas.height / 2) - (f_h / 2);
+
       c.clearRect(0, 0, c.canvas.width, c.canvas.height);
-      c.drawImage(sprite, sx, sy, w, h, x, y, w, h);
-      frame++;
-      if (frame === g.player.sheets[idx].cols) { frame = 0; }
-      if (idx === "base" && frame > 11) { frame = 0; }
-      setTimeout(g.drawGlitch, 33, idx, frame);
+      c.drawImage(g.sprites[sheet], f_x, f_y, f_w, f_h, d_x, d_y, f_w, f_h);
+      g.anim.frame++;
+      if (g.anim.frame >= g.player.anims[g.anim.sheet].length) { g.anim.frame = 0; }
     },
   };
 
@@ -97,6 +123,6 @@ $(function() {
 
   glitch.getPlayerInfo();
   glitch.getSpriteSheet();
-  glitch.drawGlitch("base", 0);
+  glitch.animate("idle2");
   reportMsg("Player Info:", (new Array(81)).join("="), glitch.player);
 });
