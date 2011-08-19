@@ -92,7 +92,10 @@ $(function() {
         setTimeout(glitch.animate, 20, sheet);
         return;
       }
+      if (!(typeof sheet === "string")) { sheet = $(this).find(":selected").text(); }
+      console.log(sheet);
       var g = glitch;
+      clearInterval(g.anim.interval);
       g.anim.sheet = sheet;
       g.anim.frame = 0;
       g.anim.interval = setInterval(g.drawGlitch, 33);
@@ -123,6 +126,21 @@ $(function() {
 
   glitch.getPlayerInfo();
   glitch.getSpriteSheet();
-  glitch.animate("idle2");
+
+  var createAnimationSelection = function() {
+    var g = glitch;
+    if (incomplete(g.loadSprites)) {
+      setTimeout(createAnimationSelection, 20);
+      return;
+    }
+    var $s = $("<select />").appendTo(document.body),
+        opts = [];
+    for (var v in g.player.anims) {
+      opts.push("<option>" + v + "</option>");
+    }
+    $s.html(opts.join("")).change(glitch.animate).change();
+  };
+  createAnimationSelection();
+
   reportMsg("Player Info:", (new Array(81)).join("="), glitch.player);
 });
