@@ -45,7 +45,7 @@ $(function() {
       }
       $.getJSON(g.url + "players.getAnimations" + g.auth.token + "&player_tsid=" + g.player.player_tsid, function(json) {
         if (json.ok) {
-          $.extend(g.player.sheets = {}, json.sheets);
+          g.player.sheets = json.sheets;
           glitch.loadSprites();
         }
         else { reportMsg(json); }
@@ -86,6 +86,7 @@ $(function() {
       c.drawImage(sprite, sx, sy, w, h, x, y, w, h);
       frame++;
       if (frame === g.player.sheets[idx].cols) { frame = 0; }
+      if (idx === "base" && frame > 11) { frame = 0; }
       setTimeout(g.drawGlitch, 33, idx, frame);
     },
   };
@@ -96,6 +97,6 @@ $(function() {
 
   glitch.getPlayerInfo();
   glitch.getSpriteSheet();
-  glitch.drawGlitch("idle1", 0);
+  glitch.drawGlitch("base", 0);
   reportMsg("Player Info:", (new Array(81)).join("="), glitch.player);
 });
